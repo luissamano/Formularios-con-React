@@ -1,70 +1,63 @@
-import React, { Component } from "react";
-import Header from "./component/Header";
-import NuevaCita from "./component/NuevaCita";
-import ListaCitas from "./component/ListaCitas";
-import "./bootstrap.min.css";
+import React, { Fragment, useState, useEffect } from 'react';
+import Formulario from './components/Formulario';
+import Cita from './components/Cita/index';
 
-class App extends Component {
-  state = {
-    citas: []
-  };
+import './bootstrap.min.css';
 
-  // cuando la aplicacion carga
-  componentDidMount() {
-    const citasLS = localStorage.getItem('citas');
-    if (citasLS) {
-      this.setState({
-        citas: JSON.parse(citasLS)
-      })
+function App() {
+  // Citas en local storage
+  let citasIniciales = JSON.parse(localStorage.getItem('citas'));
+  if (!citasIniciales) {
+    citasIniciales = [];
+  }
+
+  // Arreglo de citas
+  const [citas, guardarCitas] = useState(citasIniciales);
+
+  // Use Effect para realizar ciertas operaciones cuando el state cambia
+  useEffect(() => {
+    let citasIniciales = JSON.parse(localStorage.getItem('citas'));
+
+    if (citasIniciales) {
+      localStorage.setItem('citas', JSON.stringify(citas));
+    } else {
+      localStorage.setItem('citas', JSON.stringify([]));
     }
-  }
+  }, [citas]);
 
-  // cuando eliminamos o agregamos una nueva citas
-  componentDidUpdate() {
-    localStorage.setItem('citas', JSON.stringify(this.state.citas));
-  }
-
-  eliminarCita = id => {
-    // copia del state
-    const citasActuales = [...this.state.citas];
-
-    // utilizar filter para sacar el elemento @id del arreglo
-    const citas = citasActuales.filter(cita => cita.id !== id);
-
-    this.setState({
-      citas
-    });
+  // Función que tome las citas actuales y agregue la nueva
+  const crearCita = cita => {
+    guardarCitas([...citas, cita]);
   };
 
-  crearNuevaCita = datos => {
-    // copia el state actual
-    const citas = [...this.state.citas, datos];
-
-    // agregar el nuevo state
-    this.setState({
-      citas
-    });
+  // Función que elimina una cita por su id
+  const eliminarCita = id => {
+    const nuevasCitas = citas.filter(cita => cita.id !== id);
+    guardarCitas(nuevasCitas);
   };
 
-  render() {
-    return (
-      <div className="container">
-        <Header titulo="Administrador Pacientes Veterinaria" />
-        <div className="row">
-          <div className="col-md-12 mx-auto">
-            <NuevaCita crearNuevaCita={this.crearNuevaCita} />
+  // Mensaje condicional
+  const titulo = citas.length === 0 ? 'No hay citas' : 'Administra tus Citas';
+
+  return (
+    <Fragment>
+      <h1>Administrador de Pacientes</h1>
+
+      <div className='container'>
+        <div className='row'>
+          <div className='one-half column'>
+            <Formulario crearCita={crearCita} />
           </div>
-
-          <div className="mt-5 col-md-10 mx-auto">
-            <ListaCitas
-              citas={this.state.citas}
-              eliminarCita={this.eliminarCita}
-            />
+          <div className='one-half column'>
+            <h2>{titulo}</h2>
+            {citas.map(cita => (
+              <Cita key={cita.id} cita={cita} eliminarCita={eliminarCita} />
+            ))}
           </div>
         </div>
       </div>
-    );
-  }
+    </Fragment>
+  );
 }
 
 export default App;
